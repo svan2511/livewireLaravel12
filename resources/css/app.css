@@ -1,0 +1,150 @@
+@import 'tailwindcss';
+@import '../../vendor/livewire/flux/dist/flux.css';
+
+@source '../views';
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../vendor/livewire/flux-pro/stubs/**/*.blade.php';
+@source '../../vendor/livewire/flux/stubs/**/*.blade.php';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+
+    --color-zinc-50: #fafafa;
+    --color-zinc-100: #f5f5f5;
+    --color-zinc-200: #e5e5e5;
+    --color-zinc-300: #d4d4d4;
+    --color-zinc-400: #a3a3a3;
+    --color-zinc-500: #737373;
+    --color-zinc-600: #525252;
+    --color-zinc-700: #404040;
+    --color-zinc-800: #262626;
+    --color-zinc-900: #171717;
+    --color-zinc-950: #0a0a0a;
+
+    --color-accent: var(--color-neutral-800);
+    --color-accent-content: var(--color-neutral-800);
+    --color-accent-foreground: var(--color-white);
+}
+
+@layer theme {
+    .dark {
+        --color-accent: var(--color-white);
+        --color-accent-content: var(--color-white);
+        --color-accent-foreground: var(--color-neutral-800);
+    }
+}
+
+@layer base {
+
+    *,
+    ::after,
+    ::before,
+    ::backdrop,
+    ::file-selector-button {
+        border-color: var(--color-gray-200, currentColor);
+    }
+}
+
+[data-flux-field]:not(ui-radio, ui-checkbox) {
+    @apply grid gap-2;
+}
+
+[data-flux-label] {
+    @apply  !mb-0 !leading-tight;
+}
+
+input:focus[data-flux-control],
+textarea:focus[data-flux-control],
+select:focus[data-flux-control] {
+    @apply outline-hidden ring-2 ring-accent ring-offset-2 ring-offset-accent-foreground;
+}
+
+/* \[:where(&)\]:size-4 {
+    @apply size-4;
+} */
+
+
+/* resources/css/livewire-tables-fix.css */
+/* Force toolbar controls into ONE single responsive row */
+/* FINAL FIX – One row + perfect alignment + same height + centered placeholder */
+/* resources/css/livewire-tables-fix.css */
+/* FINAL RESPONSIVE VERSION – One row + perfect height + centered placeholder + mobile friendly */
+
+div[data-table-id] .rappasoft-table-toolbar {
+    @apply flex flex-col gap-4 mb-5;
+}
+
+/* Desktop & Tablet: everything in ONE clean row */
+@media (min-width: 640px) {
+    div[data-table-id] .rappasoft-table-toolbar {
+        @apply flex-row items-center justify-between;
+    }
+}
+
+/* Left side: Search + Columns */
+div[data-table-id] .rappasoft-table-toolbar > div:first-child {
+    @apply flex flex-col sm:flex-row items-start sm:items-center gap-3 flex-1;
+}
+
+/* Right side: Per-page + future buttons */
+div[data-table-id] .rappasoft-table-toolbar > div:last-child {
+    @apply flex items-center gap-3 justify-start sm:justify-end;
+}
+
+/* Force ALL inputs & selects to same height (matches Flux exactly) */
+div[data-table-id] .rappasoft-table-toolbar input[type="search"],
+div[data-table-id] .rappasoft-table-toolbar select {
+    @apply h-10 min-h-10 text-sm leading-tight;
+    box-sizing: border-box !important;
+}
+
+/* Search box – full width on mobile, fixed width on larger screens */
+div[data-table-id] .rappasoft-table-toolbar input[type="search"] {
+    @apply w-full sm:w-64 lg:w-80;
+}
+
+/* Columns & Per-page dropdowns – auto width but never too small */
+div[data-table-id] .rappasoft-table-toolbar select {
+    @apply w-full sm:w-auto min-w-32;
+}
+
+/* Perfect vertical centering of placeholder */
+div[data-table-id] .rappasoft-table-toolbar input[type="search"] {
+    @apply placeholder:text-gray-500 placeholder:opacity-100;
+}
+div[data-table-id] .rappasoft-table-toolbar input[type="search"]::placeholder {
+    @apply translate-y-0;
+}
+
+/* Beautiful consistent dropdown arrow for both selects */
+div[data-table-id] .rappasoft-table-toolbar select {
+    @apply appearance-none bg-white dark:bg-zinc-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm pr-10 focus:ring-2 focus:ring-blue-500 focus:border-blue-500;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.75rem center;
+    background-repeat: no-repeat;
+    background-size: 1.5em;
+}
+
+/* Remove gap between toolbar and table */
+div[data-table-id] table {
+    @apply mt-4;
+}
+
+/* Mobile-only: extra breathing room */
+@media (max-width: 639px) {
+    div[data-table-id] .rappasoft-table-toolbar > div:last-child {
+        @apply justify-start;
+    }
+}
+
+/* Remove mt-3 from ALL Flux error messages */
+div[data-flux-error] {
+    @apply mt-0;
+}
+
+/* OR if you want to be more specific (only in modals) */
+div[x-data] div[data-flux-error] {
+    @apply mt-0;
+}
