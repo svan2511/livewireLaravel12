@@ -10,6 +10,6 @@ class Permission extends ModelsPermission
     protected $fillable =  ['name','label','desc','guard_name','module'];
 
      public function module(){
-        return $this->belongsTo(Module::class,'module','slug');
+        return $this->belongsTo(Module::class,'slug','module');
     }
 }

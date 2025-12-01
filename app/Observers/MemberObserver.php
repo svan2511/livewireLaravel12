@@ -3,6 +3,7 @@
 namespace App\Observers;
 
 use App\Models\Emi;
+use App\Models\FinancialSummary;
 use App\Models\Member;
 use App\Sevices\GetFinacialReport;
 use Carbon\Carbon;
@@ -14,19 +15,21 @@ class MemberObserver
      */
     public function created(Member $member): void
     {
-        for($i=1;$i<=$member->mem_tenor;$i++){
-        // $currentDate = Carbon::now();
         $startDate = Carbon::parse($member->disb_date);
-        $dueDate = $startDate->addMonths($i);
-       
+          // Insert first month entry
+        GetFinacialReport::create($member,$startDate->format('Y-m-d'),0);
+        for($i=1;$i<=$member->mem_tenor;$i++){
+         // IMPORTANT: Use copy() so original date NEVER changes
+        $dueDate = $startDate->copy()->addMonths($i);
         Emi::create([
             "member_id" => $member->id,
             "inst_name" => "INSTALL_".$i,
             "inst_amount" => $member->monthly_inst,
             "due_date" => $dueDate->format('Y-m-d'),
         ]);
+        GetFinacialReport::create($member,$dueDate->format('Y-m-d'),$i);
        }
-       GetFinacialReport::create($member,'member');
+      
     }
 
     /**

@@ -2,125 +2,110 @@
 
 namespace App\Livewire\Permissions;
 
+use App\Services\PermissionService;
 use App\Models\Module;
-use App\Models\Permission;
 use Flux\Flux;
-use Illuminate\Support\Str;
-use Livewire\Attributes\On;
-use Livewire\Attributes\Validate;
 use Livewire\Component;
+use Livewire\Attributes\On;
 
 class PermissionForm extends Component
 {
     public $buttonText = "Create Permission";
-    public array $modules = [];
     public $editId = null;
     public $isView = false;
-     
+
+    public $module = '';
+    public $label = '';
+    public $desc = '';
+    public array $modules = [];
+
+    protected PermissionService $service;
+
+    public function boot(PermissionService $service)
+    {
+        $this->service = $service;
+    }
 
     public function render()
     {
         return view('livewire.permissions.permission-form');
     }
 
-   
-    #[Validate('required|string|max:255')]
-    public $module = '';
+    // Real-time validation
+    public function updated($field)
+    {
+        $this->validateOnly($field, $this->service->rules(), $this->service->messages());
+    }
 
-    #[Validate('required')]
-    public $label = '';
+    protected function rules()
+    {
+        return $this->service->rules($this->editId);
+    }
 
-    #[Validate('required')]
-    public $desc = '';
+    protected function messages()
+    {
+        return $this->service->messages();
+    }
 
-
+    // Submit form
     public function handleSubmit()
     {
-        //$this->validate();
-        $permission = Permission::find($this->editId);
-        $data = [
-            'module'       => $this->module,
-            'label'      => $this->label,
-            'desc'      => $this->desc,
-            'name' => Str::slug($this->label)
-            ];
-        if($this->editId ) {
-        $permission->update($data);
-        $msg= 'Permission updated successfully!';
-        }
-        else 
-            {
-        Permission::create($data);
-        $msg = 'Permission created successfully!';
-        }
+        $this->validate();
 
-        //$this->dispatch('toast', ['message' => $msg, 'type' => 'success']);
-        $this->dispatch('toast', message: $msg, type: 'success');
+        $this->service->save(
+            $this->editId,
+            $this->module,
+            $this->label,
+            $this->desc
+        );
+
+        $this->dispatch('toast', message: $this->service->successMessage($this->editId), type: 'success');
         $this->dispatch('member-created');
+
         Flux::modal('permission-form')->close();
-        
     }
 
     #[On('open-permission-modal')]
-    public function openModalnnFunction() { 
-       $this->reset();
-      $this->resetValidation();
-      $this->resetErrorBag();
-      $this->modules = Module::pluck('name', 'slug')->toArray();
-    
-      Flux::modal('permission-form')->show();
+    public function openModal()
+    {
+        $this->resetForm();
+        $this->modules = Module::pluck('name', 'slug')->toArray();
+        Flux::modal('permission-form')->show();
     }
 
-    protected function messages(): array
+    #[On('edit-table')]
+    public function editTableData($modal, $row)
     {
-    return [
-        // Member Name
-        'label.required'     => 'Please enter the label.',
-        'module.required'       => 'Please enter the module.',
-        'desc.required'          => 'Please enter the description.',
-    ];
-}
+        $permission = $this->service->find($row['id']);
+        $this->modules = Module::pluck('name', 'slug')->toArray();
+        $this->service->prepareForEdit($this, $permission, $modal);
+    }
 
-        #[On('edit-table')]
-       public function editTableData($table, $row)
-        {
-            $this->editId = $row['id'];
-             $this->isView = false;
-            $permission = Permission::findOrFail($row['id']);
-            $this->modules = Module::pluck('name', 'slug')->toArray();
-            $this->label      = $permission->label;
-            $this->desc     = $permission->desc;
-            $this->module     = $permission->module;
-            $this->buttonText = "Update Permission";
-            Flux::modal($table)->show();
-        }
+    #[On('view-table')]
+    public function viewTableData($modal, $row)
+    {
+        $permission = $this->service->find($row['id']);
+        $this->modules = Module::pluck('name', 'slug')->toArray();
+        $this->service->prepareForView($this, $permission, $modal);
+    }
 
-
-        
-        #[On('view-table')]
-       public function viewTableData($table, $row)
-        {
-            $this->editId = $row['id'];
-            $permission = Permission::findOrFail($row['id']);
-            $this->label      = $permission->label;
-            $this->desc     = $permission->desc;
-            $this->module     = $permission->module;
-            $this->buttonText = "View Permission";
-            $this->isView = true;
-            Flux::modal($table)->show();
-        }
-
-         #[On('close-modal')]
-        public function closeModalFunction() {
-            Flux::modal('permission-form')->close();
-        }
-
-         #[On('delete-table')]
-        public function deleteTableData( $row) {
-        $permission = Permission::find($row['id']);
-        $permission->delete();
+    #[On('delete-table')]
+    public function deleteTableData($row)
+    {
+        $this->service->delete($row['id']);
+        $this->dispatch('toast', message: "Permission deleted successfully!", type: 'success');
         $this->dispatch('member-created');
-        $this->dispatch('toast', message: "Permission delete Successfully !", type: 'success');
+    }
 
-        }
+    #[On('close-modal')]
+    public function closeModal()
+    {
+        Flux::modal('permission-form')->close();
+    }
+
+    private function resetForm()
+    {
+        $this->reset(['editId', 'label', 'desc', 'module', 'isView', 'buttonText']);
+        $this->resetValidation();
+    }
 }

@@ -2,7 +2,7 @@
 
 namespace App\Livewire\Centers;
 
-use App\Models\Center;
+use App\Services\CenterService;
 use Flux\Flux;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Validate;
@@ -10,96 +10,117 @@ use Livewire\Component;
 
 class CenterForm extends Component
 {
+    public function boot(CenterService $service)
+    {
+        $this->service = $service;
+    }
 
     #[Validate('required|string|max:255')]
     public $centerName;
 
-    #[Validate('required|string|max:255',message: 'Center address is mandatory!')]
+    #[Validate('required|string|max:255')]
     public $centerAddress;
-    
-    public $buttonText = "Create Center";
+
     public $editCenterId = null;
+    public $buttonText = "Create Center";
+
     public function render()
     {
         return view('livewire.centers.center-form');
     }
 
+    /* --------------------
+     | OPEN / CLOSE MODAL
+     -------------------- */
     #[On('open-form-modal')]
-
-    public function openModalFunction() {
-        
-         $this->reset(['centerName', 'centerAddress']);
+    public function openModal()
+    {
+        $this->reset(['centerName', 'centerAddress', 'editCenterId']);
+        $this->buttonText = "Create Center";
         $this->resetValidation();
-        $this->resetErrorBag();
-         Flux::modal('center-form')->show();
+        Flux::modal('center-form')->show();
     }
 
-     #[On('close-modal')]
-    public function closeModalFunction() {
-       
+    #[On('close-modal')]
+    public function closeModal()
+    {
         Flux::modal('center-form')->close();
     }
 
+    /* --------------------
+     | EDIT FORM
+     -------------------- */
     #[On('edit-table')]
-    public function editTableData($table , $row) {
-       $this->centerName = $row['center_name'];
-       $this->centerAddress = $row['center_address'];
-       $this->buttonText = "Update Center";
-       $this->editCenterId = $row['id'];
-      Flux::modal($table)->show();
+    public function edit($modal, $row)
+    {
+        $this->centerName = $row['center_name'];
+        $this->centerAddress = $row['center_address'];
+        $this->editCenterId = $row['id'];
+
+        $this->buttonText = "Update Center";
+
+        $this->resetValidation();
+        Flux::modal($modal)->show();
     }
 
+    /* --------------------
+     | DELETE
+     -------------------- */
     #[On('delete-table')]
-    public function deleteTableData( $row) {
-        $center = Center::find($row['id']);
-        $center->delete();
-        $this->dispatch('center-created');
-        $this->dispatch('toast', message: "Center delete Successfully !", type: 'success');
+    public function delete($row)
+    {
+        $this->service->delete($row['id']);
 
+        $this->dispatch('center-created');
+        $this->dispatch(
+            'toast',
+            message: "Center deleted successfully!",
+            type: 'success'
+        );
     }
 
-    
-    
+    /* --------------------
+     | CUSTOM MESSAGES
+     -------------------- */
     protected function messages(): array
     {
         return [
-            'centerName.required'    => __('The center name is required.'),
-            'centerName.string'      => __('The center name must be a valid text.'),
-            'centerName.max'         => __('The center name may not be greater than 255 characters.'),
-
-            'centerAddress.required' => __('The center address is required.'),
-            'centerAddress.string'   => __('The address must be valid text.'),
-            'centerAddress.max'      => __('The address is too long (maximum 1000 characters).'),
+            'centerName.required'    => 'Center name is required',
+            'centerAddress.required' => 'Center address is mandatory!',
         ];
     }
 
-   
-
-    public function handleSubmit() {
-       $this->validate();
-       if($this->editCenterId) {
-        $center =  Center::find($this->editCenterId);
-        $center->update([
-            'center_name'    => $this->centerName,
-            'center_address' => $this->centerAddress,
-        ]);
-         $msg = 'Center updated successfully!';
-         $this->editCenterId = null;
-       }else {
-        Center::create([
-            'center_name'    => $this->centerName,
-            'center_address' => $this->centerAddress,
-        ]);
-        $msg = 'Center created successfully!';
-       }
-   
-    $this->dispatch('toast', message: $msg, type: 'success');
-
-        $this->dispatch('center-created');
-        Flux::modal('center-form')->close();
-         // Refresh table
+    /* --------------------
+     | REAL-TIME VALIDATION
+     -------------------- */
+    public function updated($field)
+    {
+        $this->validateOnly($field); // removes only specific field error
     }
 
-  
-    
+    /* --------------------
+     | CREATE / UPDATE
+     -------------------- */
+    public function handleSubmit()
+    {
+        $this->validate();
+
+        $payload = [
+            'center_name'    => $this->centerName,
+            'center_address' => $this->centerAddress,
+        ];
+
+        if ($this->editCenterId) {
+            $this->service->update($this->editCenterId, $payload);
+            $msg = "Center updated successfully!";
+        } else {
+            $this->service->create($payload);
+            $msg = "Center created successfully!";
+        }
+
+        $this->dispatch('toast', message: $msg, type: 'success');
+        $this->dispatch('center-created');
+
+        Flux::modal('center-form')->close();
+    }
 }

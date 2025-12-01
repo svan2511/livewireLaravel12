@@ -20,7 +20,7 @@ Route::get('/', function () {
 })->name('home');
 
 Route::get('dashboard', DashboardIndex::class)
-    ->middleware(['auth', 'verified'])
+    ->middleware(['auth', 'verified','permission:view-dashboard'])
     ->name('dashboard');
 
 Route::middleware(['auth'])->group(function () {
@@ -41,13 +41,13 @@ Route::middleware(['auth'])->group(function () {
         )
         ->name('two-factor.show');
 
-    Route::get('users' , Index::class)->name('users');
-    Route::get('centers', CentersIndex::class)->name('centers');
-    Route::get('members', MembersIndex::class)->name('members');
+    Route::get('users' , Index::class)->name('users')->middleware('permission:view-user');;
+    Route::get('centers', CentersIndex::class)->name('centers')->middleware('permission:view-center');;
+    Route::get('members', MembersIndex::class)->name('members')->middleware('permission:view-member');;
     Route::get('center/{center}/members', SingleCenter::class)->name('singlecenter');
     Route::get('members/{member}', SingleMember::class)->name('singlemember');
-    Route::get('roles' , RolesIndex::class)->name('roles');
-    Route::get('permissions' , PermissionsIndex::class)->name('permissions');
+    Route::get('roles' , RolesIndex::class)->name('roles')->middleware('permission:view-role');
+    Route::get('permissions' , PermissionsIndex::class)->name('permissions')->middleware('permission:view-permission');
 
 
 });

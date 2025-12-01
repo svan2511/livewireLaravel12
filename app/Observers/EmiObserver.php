@@ -28,7 +28,7 @@ class EmiObserver
             }
        }
 
-       GetFinacialReport::create($emi,'emi');
+       GetFinacialReport::update($emi);
     }
 
     /**

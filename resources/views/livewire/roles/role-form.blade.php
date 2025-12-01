@@ -34,55 +34,38 @@
 
     <!-- Section Title -->
     <flux:heading size="md">Assign Permissions</flux:heading>
+    @error('selectedPermissions')
+    <p class="text-red-600 text-sm mt-2">{{ $message }}</p>
+@enderror
 
     <!-- Static Example Data -->
-    @php
-        $modules = [
-            'Users Module' => [
-                'view-users',
-                'create-users',
-                'edit-users',
-                'delete-users',
-            ],
-            'Centers Module' => [
-                'view-centers',
-                'create-centers',
-                'edit-centers',
-                'delete-centers',
-            ],
-            'Finance Module' => [
-                'view-reports',
-                'export-finance',
-                'manage-ledger',
-            ],
-        ];
-    @endphp
 
     <!-- Loop Modules -->
-    @foreach ($modules as $moduleName => $permissions)
+    @foreach ($permissions as $moduleName => $innerpermissions)
 
         <div class="border border-gray-200 dark:border-gray-700 rounded-xl p-4">
 
             <!-- MODULE NAME -->
             <div class="mb-3">
-                <flux:heading size="sm">{{ $moduleName }}</flux:heading>
+                <flux:heading size="sm">{{ ucwords($moduleName) }}</flux:heading>
             </div>
 
             <!-- PERMISSIONS -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                @foreach ($permissions as $perm)
+                @foreach ($innerpermissions as $value => $label)
+               
                     <label class="flex items-center gap-3">
 
                         <input 
                             type="checkbox" 
-                            value="{{ $perm }}"
+                            value="{{ $value }}"
                             wire:model="selectedPermissions"
                             class="w-4 h-4 rounded border-gray-300 text-cyan-600 focus:ring-cyan-500"
                             {{ $isView ? 'disabled' : '' }}
                         >
 
                         <span class="{{ $isView ? 'opacity-50' : '' }}">
-                            {{ ucwords(str_replace('-', ' ', $perm)) }}
+                            {{ ucwords(str_replace('-', ' ', $label)) }}
                         </span>
 
                     </label>

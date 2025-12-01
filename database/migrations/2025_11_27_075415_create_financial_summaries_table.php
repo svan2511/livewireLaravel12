@@ -25,8 +25,7 @@ return new class extends Migration
             $table->integer('outstanding_amount')->default(0); // Outstanding balance for this member at end of month
             
             $table->timestamps();
-            
-            $table->unique(['member_id', 'year', 'month_num'], 'unique_member_year_month');
+        
             $table->foreign('member_id')->references('id')->on('members')->onDelete('cascade');
         });
     }

@@ -15,21 +15,38 @@ class GetFinacialReport
         //
     }
 
-    public static function create($data,$type) {
-    [$day,$year,$monthName,$monthNumber] = self::extractDateComponents($data->disb_date ?? $data->due_date );
+    public static function create($data,$dueDate,$monthIndex) {
+    [$day,$year,$monthName,$monthNumber] = self::extractDateComponents($dueDate);
         $insertedData = [
-            'member_id' => $type === 'member' ? $data->id  : $data->member_id,
+            'member_id' => $data->id,
             'year' => $year,
             'month_num' => $monthNumber,
             'month_name' => $monthName,
-            'disbursement_amount' => $data->disb_amount ?? 0,
+            'disbursement_amount' => $monthIndex === 0 ? $data->disb_amount : 0,
             'collection_amount' => $data->paid_amount ?? 0,
-            'demand_amount' => $data->inst_amount ?? 0,
+            'demand_amount' => $monthIndex === 0 ?  0 : $data->monthly_inst,
             'outstanding_amount' =>  $data->remain_amount ?? 0
             
         ];
 
         FinancialSummary::create($insertedData);
+    }
+
+     public static function update($data) {
+     [$day,$year,$monthName,$monthNumber] = self::extractDateComponents($data->due_date );
+        $summery = FinancialSummary::where('member_id',$data->member_id)
+                                    ->where('year',$year)
+                                    ->where('month_num',$monthNumber)
+                                    ->where('month_name',$monthName)
+                                    ->first();
+        if($summery) {
+            $summery->update([
+                'collection_amount' => $data->paid_amount ?? 0 ,
+                'outstanding_amount' =>  $data->remain_amount ?? 0
+            ]);
+
+            self::nextSummaryUpdate($data);
+        }
     }
 
     public static function extractDateComponents($dateString) {
@@ -39,6 +56,17 @@ class GetFinacialReport
         $monthName = $date->format('M');
         $year = $date->year;
         return [$day, $year ,$monthName , $monthNumber];
+    }
+
+    private static function nextSummaryUpdate($data) {
+      [$day,$year,$monthName,$monthNumber] = self::extractDateComponents($data->due_date );
+        $nextMont = (int)$monthNumber + 1;
+        $nextSummary = FinancialSummary::where('member_id',$data->member_id)
+                                    ->where('year',$year)
+                                    ->where('month_num',$nextMont)
+                                    ->first();
+        $nextSummary->incrementQuietly('demand_amount', $data->remain_amount);
+
     }
 }
 

@@ -2,121 +2,156 @@
 
 namespace App\Livewire\Roles;
 
-use App\Models\Permission;
-use App\Models\Role;
+use App\Services\RoleService;
 use Flux\Flux;
-use Illuminate\Support\Str;
-use Livewire\Attributes\On;
-use Livewire\Attributes\Validate;
 use Livewire\Component;
+use Livewire\Attributes\On;
 
 class RoleForm extends Component
 {
-
-    public $buttonText = "Create Role";
+    public $buttonText = 'Create Role';
     public $editId = null;
     public $isView = false;
-     
+
+    public $label = '';
+    public $desc = '';
+    public $module = '';
+
+    public array $permissions = [];
+    public array $selectedPermissions = [];
+
+    protected RoleService $service;
+
+    public function boot(RoleService $service)
+    {
+        $this->service = $service;
+    }
+
     public function render()
     {
         return view('livewire.roles.role-form');
     }
 
-   
-    #[Validate('required')]
-    public $label = '';
+    /**
+     * Real-time validation (FIXED)
+     * - Only updates error for the current field
+     * - Does NOT remove all other field errors
+     */
+    public function updated($field)
+    {
+        $this->validateOnly($field, $this->rules());
+        $this->resetErrorBag($field);   // <--- critical fix
+    }
 
-    #[Validate('required')]
-    public $desc = '';
+    /**
+     * Validation rules from service
+     */
+    protected function rules()
+    {
+        return $this->service->rules($this->editId);
+    }
 
+    /**
+     * Validation messages from service
+     */
+    protected function messages()
+    {
+        return $this->service->messages();
+    }
 
+    /**
+     * Handle create/edit submit
+     */
     public function handleSubmit()
     {
-        //$this->validate();
-        $role = Role::find($this->editId);
-        $data = [
-            'module'       => $this->module,
-            'label'      => $this->label,
-            'desc'      => $this->desc,
-            'name' => Str::slug($this->label)
-            ];
-        if($this->editId ) {
-        $role->update($data);
-        $msg= 'Role updated successfully!';
-        }
-        else 
-            {
-        Role::create($data);
-        $msg = 'Role created successfully!';
-        }
+        $this->validate();
 
-        //$this->dispatch('toast', ['message' => $msg, 'type' => 'success']);
-        $this->dispatch('toast', message: $msg, type: 'success');
+        $this->service->saveRole(
+            $this->editId,
+            $this->module,
+            $this->label,
+            $this->desc,
+            $this->selectedPermissions
+        );
+
+        $this->dispatch('toast', message: $this->service->successMessage($this->editId), type: 'success');
         $this->dispatch('member-created');
+
         Flux::modal('role-form')->close();
-        
     }
 
+    /**
+     * Open modal for creating a new role
+     */
     #[On('open-role-modal')]
-    public function openModalnnFunction() { 
-       $this->reset();
-      $this->resetValidation();
-      $this->resetErrorBag();
-      $permissions = Permission::with('module')->orderBy('name')->get();
-      $grpData = $permissions->groupBy(function($p){
-        return $p->module->name ?? null ;
-      });
+    public function openModal()
+    {
+        $this->resetForm();
+        $this->permissions = $this->service->getPermissions();
 
-      dd($grpData);
-      Flux::modal('role-form')->show();
+        Flux::modal('role-form')->show();
     }
 
-    protected function messages(): array
+    /**
+     * Edit an existing role
+     */
+    #[On('edit-table')]
+    public function editTableData($modal, $row)
     {
-    return [
-        // Member Name
-        'label.required'     => 'Please enter the label.',
-        'desc.required'          => 'Please enter the description.',
-    ];
-}
+         $this->resetForm();
+        $role = $this->service->find($row['id']);
+        $this->service->prepareForEdit($this, $role, $modal);
+    }
 
-        #[On('edit-table')]
-       public function editTableData($table, $row)
-        {
-            $this->editId = $row['id'];
-             $this->isView = false;
-            $role = Role::findOrFail($row['id']);
-            $this->label      = $role->label;
-            $this->desc     = $role->desc;
-            $this->buttonText = "Update Role";
-            Flux::modal($table)->show();
-        }
+    /**
+     * View role details
+     */
+    #[On('view-table')]
+    public function viewTableData($modal, $row)
+    {
+         $this->resetForm();
+        $role = $this->service->find($row['id']);
+        $this->service->prepareForView($this, $role, $modal);
+    }
 
+    /**
+     * Delete a role
+     */
+    #[On('delete-table')]
+    public function deleteTableData($row)
+    {
+        $this->service->deleteRole($row['id']);
 
-        
-        #[On('view-table')]
-       public function viewTableData($table, $row)
-        {
-            $this->editId = $row['id'];
-            $role = Role::findOrFail($row['id']);
-            $this->label      = $role->label;
-            $this->desc     = $role->desc;
-            $this->buttonText = "View Role";
-            $this->isView = true;
-            Flux::modal($table)->show();
-        }
-
-         #[On('close-modal')]
-        public function closeModalFunction() {
-            Flux::modal('role-form')->close();
-        }
-
-         #[On('delete-table')]
-        public function deleteTableData( $row) {
-        $role = Role::find($row['id']);
-        $role->delete();
+        $this->dispatch('toast', message: 'Role deleted successfully!', type: 'success');
         $this->dispatch('member-created');
-        $this->dispatch('toast', message: "Role delete Successfully !", type: 'success');
+    }
 
-        }
+    /**
+     * Close modal
+     */
+    #[On('close-modal')]
+    public function closeModal()
+    {
+        Flux::modal('role-form')->close();
+    }
+
+    /**
+     * Reset form state
+     */
+    private function resetForm()
+    {
+        $this->reset([
+            'editId',
+            'label',
+            'desc',
+            'module',
+            'selectedPermissions',
+            'isView',
+            'buttonText',
+        ]);
+
+        $this->resetValidation();
+
+        $this->permissions = [];
+    }
 }

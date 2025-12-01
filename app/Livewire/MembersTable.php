@@ -106,7 +106,10 @@ class MembersTable extends DataTableComponent
             ->label(
                 fn($row, Column $column) => view('livewire.table-actions',[
                 'row'   => $row,
-                'table' => 'member-form'   // ← This tells you which table
+                'modal' => 'member-form' ,
+                 'viewPermisson' => 'view-member',
+                'editPermisson' => 'edit-member',
+                'deletePermisson' => 'delete-member'
             ])
             ),
             

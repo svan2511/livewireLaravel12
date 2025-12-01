@@ -15,7 +15,7 @@
         <!-- Add New Center Button – Right aligned -->
     
     
-
+@can('create-role')
 <div x-data="{ isLoading: false }">
     <button
         type="button"
@@ -45,7 +45,7 @@
     </button>
 </div>
 
-
+@endcan
 
     </div>
 

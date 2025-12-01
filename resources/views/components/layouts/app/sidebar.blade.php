@@ -13,13 +13,24 @@
 
             <flux:navlist variant="outline">
                 <flux:navlist.group :heading="__('Platform')" class="grid">
+                    @can('view-dashboard')
                     <flux:navlist.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>{{ __('Dashboard') }}</flux:navlist.item>
+                   @endcan
+                    @can('view-user')
                     <flux:navlist.item icon="users" :href="route('users')" :current="request()->routeIs('users')" wire:navigate>{{ __('Users') }}</flux:navlist.item>
+                     @endcan
+                    @can('view-center')
                     <flux:navlist.item icon="home" :href="route('centers')" :current="request()->routeIs('centers')" wire:navigate>{{ __('Centers') }}</flux:navlist.item>
+                     @endcan
+                    @can('view-member')
                     <flux:navlist.item icon="users" :href="route('members')" :current="request()->routeIs('members')" wire:navigate>{{ __('Members') }}</flux:navlist.item>
+                     @endcan
+                    @can('view-permission')
                     <flux:navlist.item icon="users" :href="route('permissions')" :current="request()->routeIs('permissions')" wire:navigate>{{ __('Permissions') }}</flux:navlist.item>
+                     @endcan
+                    @can('view-role')
                     <flux:navlist.item icon="users" :href="route('roles')" :current="request()->routeIs('roles')" wire:navigate>{{ __('Roles') }}</flux:navlist.item>
-
+                    @endcan
                 </flux:navlist.group>
             </flux:navlist>
 

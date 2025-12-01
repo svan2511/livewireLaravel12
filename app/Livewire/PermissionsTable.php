@@ -2,11 +2,13 @@
 
 namespace App\Livewire;
 
+use App\Exports\PermissionsExport;
 use Rappasoft\LaravelLivewireTables\DataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
 use App\Models\Permission;
 use Carbon\Carbon;
 use Livewire\Attributes\On;
+use Maatwebsite\Excel\Facades\Excel;
 
 class PermissionsTable extends DataTableComponent
 {
@@ -38,14 +40,14 @@ class PermissionsTable extends DataTableComponent
 
     }
 
-    //  public function exportExcel() {
-    //     $ids = $this->getSelected();
-    //     if (empty($ids)) {
-    //     $this->dispatch('toast', message: "Please Select atleast One Row.", type: 'error');
-    //     return;
-    //     }
-    //     return Excel::download(new MembersExport($ids) , 'members.xlsx');
-    // }
+     public function exportExcel() {
+        $ids = $this->getSelected();
+        if (empty($ids)) {
+        $this->dispatch('toast', message: "Please Select atleast One Row.", type: 'error');
+        return;
+        }
+        return Excel::download(new PermissionsExport($ids) , 'permissions.xlsx');
+    }
 
      #[On('member-created')]
    public function refreshAfterCreate()
@@ -76,7 +78,10 @@ class PermissionsTable extends DataTableComponent
             ->label(
                 fn($row, Column $column) => view('livewire.table-actions',[
                 'row'   => $row,
-                'table' => 'permission-form'   // ← This tells you which table
+                'modal' => 'permission-form' ,
+                 'viewPermisson' => 'view-permission',
+                'editPermisson' => 'edit-permission',
+                'deletePermisson' => 'delete-permission'
             ])
             ),
         ];

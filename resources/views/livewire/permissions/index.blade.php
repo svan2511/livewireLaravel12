@@ -15,7 +15,7 @@
         <!-- Add New Center Button – Right aligned -->
     
     
-
+@can('create-permission')
 <div x-data="{ isLoading: false }">
     <button
         type="button"
@@ -44,7 +44,7 @@
         </span>
     </button>
 </div>
-
+@endcan
 
 
     </div>

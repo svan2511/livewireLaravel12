@@ -53,6 +53,8 @@
             </div>
         </div>
 
+        @can('View-dashboard-map')
+
         <!-- Filters Section -->
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-5">Filter Data</h3>
@@ -119,6 +121,8 @@
             <canvas id="odDemandChart"></canvas>
         </div>
     </div>
+
+    @endcan
 
 </div>
 

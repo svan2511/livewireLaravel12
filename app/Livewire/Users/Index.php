@@ -4,6 +4,7 @@ namespace App\Livewire\Users;
 
 use Livewire\Component;
 use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use Livewire\WithoutUrlPagination;
 use Livewire\WithPagination;
 
@@ -13,9 +14,6 @@ class Index extends Component
 
     public function render()
     {
-             $users = User::orderBy('created_at', 'desc')
-             ->paginate(1);
-
-             return view('livewire.users.index',compact('users'));
+        return view('livewire.users.index');
     }
 }

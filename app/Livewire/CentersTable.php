@@ -94,7 +94,10 @@ $this->setSearchFieldAttributes([
             ->label(
                 fn($row, Column $column) => view('livewire.table-actions',[
                 'row'   => $row,
-                'table' => 'center-form'   // ← This tells you which table
+                'modal' => 'center-form',
+                 'viewPermisson' => 'view-center',
+                'editPermisson' => 'edit-center',
+                'deletePermisson' => 'delete-center'
             ])
             ),
         
