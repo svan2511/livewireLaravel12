@@ -11,28 +11,28 @@ class ModuleSeeder extends Seeder
     {
         $modules = [
             [
-                'name' => 'Users',
-                'slug' => 'users',
+                'name' => 'User',
+                'slug' => 'user',
                 'desc' => 'User management module',
             ],
             [
-                'name' => 'Centers',
-                'slug' => 'centers',
+                'name' => 'Center',
+                'slug' => 'center',
                 'desc' => 'Center management module',
             ],
             [
-                'name' => 'Members',
-                'slug' => 'members',
+                'name' => 'Member',
+                'slug' => 'member',
                 'desc' => 'Member management module',
             ],
             [
-                'name' => 'Permissions',
-                'slug' => 'permissions',
+                'name' => 'Permission',
+                'slug' => 'permission',
                 'desc' => 'Permission management module',
             ],
             [
-                'name' => 'Roles',
-                'slug' => 'roles',
+                'name' => 'Role',
+                'slug' => 'role',
                 'desc' => 'Role management module',
             ],
             [

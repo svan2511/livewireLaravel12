@@ -3,7 +3,9 @@
 namespace App\Livewire\Roles;
 
 use App\Services\RoleService;
+use Exception;
 use Flux\Flux;
+use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 use Livewire\Attributes\On;
 
@@ -66,15 +68,23 @@ class RoleForm extends Component
     {
         $this->validate();
 
-        $this->service->saveRole(
+        try {
+            $this->service->saveRole(
             $this->editId,
             $this->module,
             $this->label,
             $this->desc,
             $this->selectedPermissions
         );
+        $msg= $this->service->successMessage($this->editId);
+        $type="success";
 
-        $this->dispatch('toast', message: $this->service->successMessage($this->editId), type: 'success');
+        }catch(Exception $ex) {
+        Log::info("ERROR:ROLE1 : " . $ex->getMessage());
+        $msg="Some internal error !";
+        $type="error";
+        }
+        $this->dispatch('toast', message: $msg, type: $type);
         $this->dispatch('member-created');
 
         Flux::modal('role-form')->close();
@@ -87,8 +97,14 @@ class RoleForm extends Component
     public function openModal()
     {
         $this->resetForm();
+        try {
         $this->permissions = $this->service->getPermissions();
-
+        }catch(Exception $ex) {
+        Log::info("ERROR:ROLE2 : " . $ex->getMessage());
+        $msg="Some internal error !";
+        $type="error";
+        $this->dispatch('toast', message: $msg, type: $type);
+        }
         Flux::modal('role-form')->show();
     }
 
@@ -99,8 +115,15 @@ class RoleForm extends Component
     public function editTableData($modal, $row)
     {
          $this->resetForm();
+         try {
         $role = $this->service->find($row['id']);
         $this->service->prepareForEdit($this, $role, $modal);
+         }catch(Exception $ex) {
+        Log::info("ERROR:ROLE3 : " . $ex->getMessage());
+        $msg="Some internal error !";
+        $type="error";
+        $this->dispatch('toast', message: $msg, type: $type);
+        }
     }
 
     /**
@@ -110,8 +133,16 @@ class RoleForm extends Component
     public function viewTableData($modal, $row)
     {
          $this->resetForm();
+         try {
         $role = $this->service->find($row['id']);
         $this->service->prepareForView($this, $role, $modal);
+         }catch(Exception $ex) {
+        Log::info("ERROR:ROLE4 : " . $ex->getMessage());
+        $msg="Some internal error !";
+        $type="error";
+        $this->dispatch('toast', message: $msg, type: $type);
+        }
+      
     }
 
     /**
@@ -120,9 +151,17 @@ class RoleForm extends Component
     #[On('delete-table')]
     public function deleteTableData($row)
     {
+        try {
         $this->service->deleteRole($row['id']);
-
-        $this->dispatch('toast', message: 'Role deleted successfully!', type: 'success');
+         $msg="Role deleted successfully!";
+        $type="success";
+        }catch(Exception $ex) {
+        Log::info("ERROR:ROLE5 : " . $ex->getMessage());
+        $msg="Some internal error !";
+        $type="error";
+        }
+        
+        $this->dispatch('toast', message: $msg, type: $type);
         $this->dispatch('member-created');
     }
 

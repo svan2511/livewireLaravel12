@@ -3,7 +3,9 @@
 namespace App\Livewire\Centers;
 
 use App\Services\CenterService;
+use Exception;
 use Flux\Flux;
+use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
@@ -69,13 +71,21 @@ class CenterForm extends Component
     #[On('delete-table')]
     public function delete($row)
     {
+       try{
         $this->service->delete($row['id']);
-
         $this->dispatch('center-created');
+        $msg = "Center deleted successfully!";
+        $type = "success";
+       }
+       catch(Exception $ex) {
+        Log::info("ERROR:CENTER1 : " . $ex->getMessage());
+        $msg = "Some internal Error !";
+        $type = "error";
+       }
         $this->dispatch(
             'toast',
-            message: "Center deleted successfully!",
-            type: 'success'
+            message: $msg,
+            type: $type
         );
     }
 
@@ -105,7 +115,8 @@ class CenterForm extends Component
     {
         $this->validate();
 
-        $payload = [
+        try{
+            $payload = [
             'center_name'    => $this->centerName,
             'center_address' => $this->centerAddress,
         ];
@@ -117,10 +128,15 @@ class CenterForm extends Component
             $this->service->create($payload);
             $msg = "Center created successfully!";
         }
-
-        $this->dispatch('toast', message: $msg, type: 'success');
+        $type ="success";                        
         $this->dispatch('center-created');
-
+        }
+        catch(Exception $ex){
+        Log::info("ERROR:CENTER2 : " . $ex->getMessage());
+        $msg = "Some internal Error !";
+        $type = "error";
+        }
+        $this->dispatch('toast', message: $msg, type: $type);
         Flux::modal('center-form')->close();
     }
 }

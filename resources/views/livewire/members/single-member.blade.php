@@ -70,16 +70,18 @@
                     <th class="px-6 py-4 text-left">Paid Amount</th>
                     <th class="px-6 py-4 text-left">Remaining</th>
                     <th class="px-6 py-4 text-left">Status</th>
-                    <th class="px-6 py-4 text-left">Action</th>
+                    @can('update-emi') <th class="px-6 py-4 text-left">Action</th> @endcan
                 </tr>
             </thead>
 
             <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
 
+
                 @foreach($member->emis as $emi)
                 @php
                 
                 $disabled = $this->daysBetween($emi->due_date) <= 0  ? 0 : 1 ;
+                
                 @endphp
 
                     <tr class="transition-all
@@ -159,6 +161,7 @@
                     </td>
 
                     <!-- Actions -->
+                     @can('update-emi')
                     <td class="px-6 py-4">
                      
                             <div class="flex gap-2 flex-wrap">
@@ -183,6 +186,7 @@
 
                             </div>
                     </td>
+                    @endcan
 
                 </tr>
                 @endforeach

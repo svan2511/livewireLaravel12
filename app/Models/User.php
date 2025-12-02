@@ -63,4 +63,14 @@ class User extends Authenticatable
             ->map(fn ($word) => Str::substr($word, 0, 1))
             ->implode('');
     }
+
+    public function roles()
+    {
+        return $this->belongsToMany(Role::class ,'model_has_roles', 'model_id', 'role_id');
+    }
+
+    public function permissions()
+    {
+        return $this->belongsToMany(Permission::class,'model_has_permissions', 'model_id', 'permission_id');
+    }
 }

@@ -3,6 +3,8 @@
 namespace App\Livewire\Dashboard;
 
 use App\Services\DashboardService;
+use Exception;
+use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 
 class Index extends Component
@@ -38,18 +40,26 @@ class Index extends Component
 
     private function refreshData()
     {
+        
         $filters = [
             'year'   => $this->selectedYear,
             'center' => $this->selectedCenter,
             'member' => $this->selectedMember,
         ];
-
+        try{
         $this->graphdata = $this->service->getGraphData($filters);
+        }
+        catch(Exception $ex) {
+        Log::info("ERROR:DASH1 : " . $ex->getMessage());
+        $this->dispatch('toast', message: "Some internal Error !", type: "error");
+        }
+
         $this->dispatch('update-charts', graphdata: $this->graphdata);
     }
 
     public function render()
     {
+        try{
         $this->centers = $this->service->loadCenters();
 
         // Load member lists depending on center
@@ -61,10 +71,16 @@ class Index extends Component
         $this->userCount = $counts['users'];
         $this->memberCount = $counts['members'];
         $this->centerCount = $counts['centers'];
-
         // Graph data
         $this->refreshData();
-
+        }
+        catch(Exception $ex) {
+        Log::info("ERROR:DASH2 : " . $ex->getMessage());
+        $this->dispatch('toast', message: "Some internal Error !", type: "error");
+        }
         return view('livewire.dashboard.index');
     }
+        
+        
+    
 }

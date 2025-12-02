@@ -78,9 +78,9 @@
 
                 <!-- Upload Button -->
                 <div class="space-y-2">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <!-- <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
                         Member Photo
-                    </label>
+                    </label> -->
 
                     <div class="flex flex-col items-center justify-center space-y-5">
                         <input 
@@ -93,7 +93,7 @@
 
                         <label 
                             for="mem_img_input" 
-                            class="cursor-pointer inline-flex items-center mt-3 gap-3 px-6 py-4 bg-cyan-600 hover:bg-cyan-700 text-white font-medium rounded-xl shadow-lg transition-all hover:shadow-xl"
+                            class="cursor-pointer inline-flex items-center mt-6 gap-3 px-6 py-3 bg-cyan-600 hover:bg-cyan-700 text-white font-medium rounded-xl shadow-lg transition-all hover:shadow-xl"
                         >
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 

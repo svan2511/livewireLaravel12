@@ -11,14 +11,14 @@ class PermissionsSeeder extends Seeder
     {
         $modules = [
             'dashboard',
-            'users',
-            'centers',
-            'members',
-            'permissions',
-            'roles',
+            'user',
+            'center',
+            'member',
+            'permission',
+            'role',
         ];
 
-        $actions = ['create', 'edit', 'delete'];
+        $actions = ['create','view','edit', 'delete'];
 
         foreach ($modules as $module) {
             foreach ($actions as $action) {

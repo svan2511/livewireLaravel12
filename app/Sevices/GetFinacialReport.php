@@ -37,7 +37,6 @@ class GetFinacialReport
         $summery = FinancialSummary::where('member_id',$data->member_id)
                                     ->where('year',$year)
                                     ->where('month_num',$monthNumber)
-                                    ->where('month_name',$monthName)
                                     ->first();
         if($summery) {
             $summery->update([
@@ -60,7 +59,8 @@ class GetFinacialReport
 
     private static function nextSummaryUpdate($data) {
       [$day,$year,$monthName,$monthNumber] = self::extractDateComponents($data->due_date );
-        $nextMont = (int)$monthNumber + 1;
+        $nextMont = (int)$monthNumber === 12 ? 1 : (int)$monthNumber + 1;
+        $year = (int)$monthNumber === 12 ? (int)$year + 1 : $year ;
         $nextSummary = FinancialSummary::where('member_id',$data->member_id)
                                     ->where('year',$year)
                                     ->where('month_num',$nextMont)

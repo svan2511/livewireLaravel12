@@ -5,8 +5,10 @@ namespace App\Livewire\Members;
 use App\Models\Emi;
 use App\Models\Member;
 use DateTime;
+use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 
 class SingleMember extends Component
@@ -29,13 +31,14 @@ class SingleMember extends Component
     }
 
     public function markpartiallyPaid($emiId) {
-      
+
+        try {
+            
         $amount = (int) $this->paid_amounts[$emiId];
         if ($amount <= 0) {
             $this->dispatch('toast', message: "Please enter some amount!", type: 'error');
             return;
         }
-
         // Fetch EMI
         $emi = Emi::find($emiId);
 
@@ -61,15 +64,24 @@ class SingleMember extends Component
 
         // Reset input field
          $this->paid_amounts[$emiId] = $amount;
+        $msg =  "Payment updated successfully! !";
+        $type = "success";
 
-        $this->dispatch('toast', message: "Payment updated successfully!", type: 'success');
+        } catch(Exception $ex) {
+        Log::info("ERROR:MEM4 : " . $ex->getMessage());
+        $msg =  "Some Internal Error !";
+        $type = "error";
+        }
+
+        $this->dispatch('toast', message: $msg, type: $type);
        
     }
 
         public function markFullPaid($emiId)
         {
-            $emi = $this->member->emis()->findOrFail($emiId);
 
+        try {
+             $emi = $this->member->emis()->findOrFail($emiId);
             // Prevent double full payment
             if ($emi->status === 1 ) {
                 $this->dispatch('toast', [
@@ -103,11 +115,18 @@ class SingleMember extends Component
 
             // Reset the input field after marking full paid
            $this->paid_amounts[$emiId] = $emi->inst_amount;
+           $msg = "EMI #{$emi->id} marked as Full Paid (₹" . number_format($emi->inst_amount) . ")";
+           $type = "success";
 
+        } catch(Exception $ex) {
+        Log::info("ERROR:MEM5 : " . $ex->getMessage());
+        $msg =  "Some Internal Error !";
+        $type = "error";
+        }
             // Success message
-            $this->dispatch('toast', 
-                message : "EMI #{$emi->id} marked as Full Paid (₹" . number_format($emi->inst_amount) . ")",
-                type  : 'success'
+         $this->dispatch('toast', 
+                message : $msg,
+                type  : $type
             );
 
         }

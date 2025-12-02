@@ -5,7 +5,10 @@ namespace App\Livewire\Members;
 use App\Models\Center;
 use App\Models\Member;
 use App\Services\MemberService;
+use Exception;
 use Flux\Flux;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -147,7 +150,8 @@ class MemberForm extends Component
             'disb_date'    => $this->disb_date,
         ];
 
-        // ✅ FIXED IMAGE HANDLING CODE GOES HERE
+        try{
+            // ✅ FIXED IMAGE HANDLING CODE GOES HERE
         if ($this->mem_img && !is_string($this->mem_img)) {
 
             // new image uploaded
@@ -168,11 +172,22 @@ class MemberForm extends Component
             $this->service->updateMember($this->editId, $data);
             $msg = 'Member updated successfully!';
         } else {
+          DB::transaction(function () use ($data) {
             $this->service->createMember($data);
+        });
             $msg = 'Member created successfully!';
         }
 
-        $this->dispatch('toast', message: $msg, type: 'success');
+        $type = "success";
+
+        }
+        catch(Exception $ex) {
+        Log::info("ERROR:MEM12 : " . $ex->getMessage());
+        $msg = "Some internal Error !";
+        $type = "error";
+        }
+
+        $this->dispatch('toast', message: $msg, type: $type);
         $this->dispatch('member-created');
         Flux::modal('member-form')->close();
     }
@@ -184,7 +199,13 @@ class MemberForm extends Component
         $this->resetForm();
 
         $this->editId = $row['id'];
-        $member = $this->service->findOrFail($this->editId);
+        try {
+            $member = $this->service->findOrFail($this->editId);
+        }
+        catch(Exception $ex) {
+        Log::info("ERROR:MEM2 : " . $ex->getMessage());
+        $this->dispatch('toast', message: "Some internal error !", type: "error");
+        }
 
         $this->mem_name     = $member->mem_name;
         $this->mem_phone    = $member->mem_phone;
@@ -209,9 +230,18 @@ class MemberForm extends Component
     #[On('delete-table')]
     public function deleteTableData($row)
     {
+        try {
         $this->service->deleteMember($row['id']);
         $this->dispatch('member-created');
-        $this->dispatch('toast', message: "Member deleted successfully!", type: 'success');
+        $msg =  "Member deleted successfully!";
+        $type = "success";
+        }
+        catch(Exception $ex) {
+        Log::info("ERROR:MEM3 : " . $ex->getMessage());
+        $msg =  "Some Internal Error !";
+        $type = "error";
+        }
+       $this->dispatch('toast', message: $msg, type: $type);
     }
 
     /** Reset everything for create */
