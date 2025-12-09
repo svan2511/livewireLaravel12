@@ -25,23 +25,21 @@ RUN apt-get update && apt-get install -y \
 # Install Composer globally
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
-# Copy the entire project first (so artisan exists for post-autoload scripts)
+# Copy project files
 COPY . /app
 
-# Set temporary APP_KEY to allow artisan scripts to run during build
-ENV APP_KEY=base64:TempKeyForBuildOnly1234567890abcd==
+# Use Railway's environment APP_KEY (do NOT hardcode temporary key)
+# Ensure APP_KEY is set in Railway Environment Variables
 
 # Install PHP dependencies
 RUN composer install --no-interaction --optimize-autoloader --prefer-dist
 
-# Install Node dependencies for Vite/Livewire
+# Install Node dependencies and build assets
 RUN npm ci --omit=dev
-
-# Build frontend assets
 RUN npm run build
 
-# Expose port for Laravel
+# Expose container port (Railway will map $PORT automatically)
 EXPOSE 8000
 
-# Start Laravel server
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
+# Start Laravel using Railway's dynamic port
+CMD ["sh", "-c", "php artisan serve --host=0.0.0.0 --port=${PORT:-8000}"]
