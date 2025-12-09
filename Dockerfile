@@ -1,22 +1,34 @@
+# Use official PHP FPM image
 FROM php:8.2-fpm
 
+# Set working directory
 WORKDIR /app
 
-# Install system dependencies + PHP extensions
+# Install system dependencies and PHP extensions
 RUN apt-get update && apt-get install -y \
-    git curl unzip libzip-dev libonig-dev libpng-dev libjpeg-dev libfreetype6-dev libxml2-dev zlib1g-dev \
-    nodejs npm \
+    git \
+    curl \
+    unzip \
+    libzip-dev \
+    libonig-dev \
+    libpng-dev \
+    libjpeg-dev \
+    libfreetype6-dev \
+    libxml2-dev \
+    zlib1g-dev \
+    nodejs \
+    npm \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install pdo_mysql zip gd bcmath mbstring tokenizer xml ctype opcache \
+    && docker-php-ext-install pdo_mysql zip gd bcmath mbstring xml opcache \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Composer globally
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
-# Copy only composer files first for caching
+# Copy only composer files for caching
 COPY composer.json composer.lock /app/
 
-# Temporary APP_KEY to allow artisan scripts to run
+# Set temporary APP_KEY to allow artisan scripts to run
 ENV APP_KEY=base64:TempKeyForBuildOnly1234567890abcd==
 
 # Install PHP dependencies
@@ -31,7 +43,7 @@ RUN npm ci --omit=dev
 # Build frontend assets
 RUN npm run build
 
-# Expose port
+# Expose port for Laravel
 EXPOSE 8000
 
 # Start Laravel server
