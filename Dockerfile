@@ -1,19 +1,22 @@
-# Use official PHP FPM image
 FROM php:8.2-fpm
 
 # Set working directory
 WORKDIR /app
 
-# Install system dependencies
+# Install system dependencies + PHP extensions
 RUN apt-get update && apt-get install -y \
     git \
     curl \
     unzip \
     libzip-dev \
     libonig-dev \
+    libpng-dev \
+    libjpeg-dev \
+    libfreetype6-dev \
     nodejs \
     npm \
-    && docker-php-ext-install pdo_mysql zip \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install pdo_mysql zip gd \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Composer globally
@@ -31,10 +34,10 @@ COPY . /app
 # Install Node dependencies for Vite/Livewire
 RUN npm ci --omit=dev
 
-# Build frontend assets (Vite)
+# Build frontend assets
 RUN npm run build
 
-# Expose port (Railway handles routing automatically)
+# Expose port
 EXPOSE 8000
 
 # Start Laravel server
