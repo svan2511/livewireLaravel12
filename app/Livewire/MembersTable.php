@@ -7,6 +7,7 @@ use Rappasoft\LaravelLivewireTables\DataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
 use App\Models\Member;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\On;
 use Maatwebsite\Excel\Facades\Excel;
@@ -61,11 +62,6 @@ class MembersTable extends DataTableComponent
         $this->clearSelected(); // Optional: clear bulk selection
     }
 
-    // public function query()
-    // {
-    //     return Member::with('center')->where('center_id',1); // ← Load relation (no count)
-    // }
-
     public function builder(): \Illuminate\Database\Eloquent\Builder
     {
         $query = Member::query()->with('center');
@@ -86,7 +82,7 @@ class MembersTable extends DataTableComponent
                 ->sortable(),
            Column::make("Photo", "mem_img")
                 ->format(fn ($value) =>
-                    '<img src="'.Storage::url($value).'"
+                    '<img src="'.$value.'"
                         class="h-10 w-10 rounded-full object-cover" />'
                 )
                 ->html(),

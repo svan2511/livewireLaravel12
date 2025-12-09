@@ -10,7 +10,7 @@ class Member extends Model
 {
     use HasFactory;
     
-    protected $fillable = ['mem_name','mem_img','center_id' ,'disb_amount','mem_tenor' ,'monthly_inst' ,'mem_phone','disb_date'];
+    protected $fillable = ['mem_name','mem_img','img_public_id','center_id' ,'disb_amount','mem_tenor' ,'monthly_inst' ,'mem_phone','disb_date'];
 
     public function center(){
         return $this->belongsTo(Center::class)->select('id', 'center_name')->withDefault(null);

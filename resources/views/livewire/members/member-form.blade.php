@@ -128,7 +128,7 @@
                     @elseif ($old_img)
                         <div class="relative">
                             <img 
-                                src="{{ Storage::url($old_img) }}" 
+                                src="{{ $old_img }}" 
                                 alt="Current Photo" 
                                 class="w-48 h-48 object-cover rounded-2xl shadow-2xl border-8 border-white dark:border-gray-800"
                             >

@@ -33,4 +33,14 @@ class MemberService
     {
         return $this->repo->findOrFail($id);
     }
+
+    public function uploadImage($image)
+    {
+        return $this->repo->uplaodAndSaveImage($image);
+    }
+
+    public function deleteImage($id)
+    {
+        return $this->repo->deleteImage($id);
+    }
 }

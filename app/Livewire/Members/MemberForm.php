@@ -2,6 +2,8 @@
 
 namespace App\Livewire\Members;
 
+use App\Jobs\DeleteMemberImage;
+use App\Jobs\UploadMemberImage;
 use App\Models\Center;
 use App\Models\Member;
 use App\Services\MemberService;
@@ -9,11 +11,9 @@ use Exception;
 use Flux\Flux;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\Attributes\On;
-use Livewire\Attributes\Validate;
 
 class MemberForm extends Component
 {
@@ -58,6 +58,8 @@ class MemberForm extends Component
 
     // #[Validate('required')]
     public $disb_date = '';
+
+    public $img_public_id='';
 
    
    
@@ -151,15 +153,22 @@ class MemberForm extends Component
         ];
 
         try{
+             $imgPath = $this->mem_img->getRealPath();
+             $imgPublicId = '';
             // ✅ FIXED IMAGE HANDLING CODE GOES HERE
         if ($this->mem_img && !is_string($this->mem_img)) {
 
-            // new image uploaded
-            $data['mem_img'] = $this->mem_img->store('members', 'public');
+            // $result = $this->service->uploadImage($this->mem_img->getRealPath());
+            // // new image uploaded
+            // $data['img_public_id'] = $result['public_id'];
+            // $data['mem_img'] = $result['secure_url'];
+           
 
             // delete old image
             if ($this->old_img) {
-                Storage::disk('public')->delete($this->old_img);
+            //  $this->service->deleteImage($this->img_public_id);
+               $imgPublicId = $this->img_public_id;
+              //DeleteMemberImage::dispatch($imgPublicId);
             }
 
         } else {
@@ -168,15 +177,22 @@ class MemberForm extends Component
         }
         // ✅ END FIX
 
+        $member = new Member;
         if ($this->editId) {
-            $this->service->updateMember($this->editId, $data);
+           $member =  $this->service->updateMember($this->editId, $data);
             $msg = 'Member updated successfully!';
         } else {
-          DB::transaction(function () use ($data) {
-            $this->service->createMember($data);
+          DB::transaction(function ()  use (&$member, $data) {
+           $member=  $this->service->createMember($data);
         });
             $msg = 'Member created successfully!';
         }
+
+         UploadMemberImage::dispatch(
+                $member->id,
+                $imgPath,
+                $imgPublicId
+            );
 
         $type = "success";
 
@@ -214,6 +230,7 @@ class MemberForm extends Component
         $this->mem_tenor    = $member->mem_tenor;
         $this->monthly_inst = $member->monthly_inst;
         $this->disb_date    = $member->disb_date;
+        $this->img_public_id = $member->img_public_id;
 
         // Store old image path separately
         $this->old_img = $member->mem_img;

@@ -14,7 +14,8 @@ return new class extends Migration
         Schema::create('members', function (Blueprint $table) {
             $table->id();
             $table->string('mem_name');
-            $table->string('mem_img');
+            $table->string('mem_img')->nullable();
+            $table->string('img_public_id')->nullable();
             $table->foreignId('center_id')->nullable();
             $table->integer('disb_amount');
             $table->date('disb_date');
