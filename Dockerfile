@@ -28,9 +28,6 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 # Copy project files
 COPY . /app
 
-# Use Railway's environment APP_KEY (do NOT hardcode temporary key)
-# Ensure APP_KEY is set in Railway Environment Variables
-
 # Install PHP dependencies
 RUN composer install --no-interaction --optimize-autoloader --prefer-dist
 
@@ -42,4 +39,4 @@ RUN npm run build
 EXPOSE 8000
 
 # Start Laravel using Railway's dynamic port
-CMD ["sh", "-c", "php artisan serve --host=0.0.0.0 --port=${PORT:-8000}"]
+CMD ["sh", "-c", "php artisan serve --host=0.0.0.0 --port=${PORT}"]
