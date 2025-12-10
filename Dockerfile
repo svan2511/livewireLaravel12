@@ -19,7 +19,7 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install pdo_mysql zip gd mbstring bcmath xml opcache
 
-# Install Node.js (v18)
+# Install Node.js 18.x
 RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
     && apt-get install -y nodejs
 
@@ -38,11 +38,17 @@ RUN composer install --no-interaction --prefer-dist --optimize-autoloader
 RUN npm ci --omit=dev
 RUN npm run build
 
+# Fix permissions (important)
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+
+# Configure PHP-FPM to listen on socket instead of TCP
+RUN sed -i 's|listen = 9000|listen = /run/php/php8.2-fpm.sock|' /usr/local/etc/php-fpm.d/zz-docker.conf
+
 # Configure Nginx
 RUN rm -f /etc/nginx/sites-enabled/default
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
 
-# Add entrypoint script
+# Copy entrypoint
 COPY docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 

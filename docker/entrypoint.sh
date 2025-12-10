@@ -1,7 +1,7 @@
-#!/bin/bash
+#!/bin/sh
 
-# Start Nginx (foreground mode)
-nginx &
+# Start PHP-FPM
+php-fpm -D
 
-# Start PHP-FPM (foreground)
-php-fpm -F
+# Start Nginx
+nginx -g 'daemon off;'
