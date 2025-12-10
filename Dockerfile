@@ -1,17 +1,15 @@
-# ---------- Builder Stage ----------
+# ================ BUILDER ================
 FROM php:8.3-cli AS builder
 
-# Install dependencies
+# Install system packages + Node.js 20
 RUN apt-get update && apt-get install -y \
     git curl zip unzip \
     libpng-dev libjpeg-dev libfreetype6-dev libzip-dev \
-    && rm -rf /var/lib/apt/lists/*
+    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Node.js 20 (Railway loves it)
-RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
-    && apt-get install -y nodejs
-
-# PHP Extensions (including gd for PhpSpreadsheet)
+# PHP extensions (including gd for PhpSpreadsheet)
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) pdo_mysql zip bcmath gd opcache
 
@@ -20,27 +18,30 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /app
 
-# Copy composer files
+# 1. Copy only composer files first (caching)
 COPY composer.json composer.lock ./
 
-# Install dependencies (allow scripts because Laravel needs artisan)
+# 2. Install dependencies WITHOUT running scripts yet (artisan not present)
 RUN composer install \
     --no-dev \
-    --optimize-autoloader \
-    --no-interaction \
+    --no-scripts \
+    --no-autoloader \
     --prefer-dist \
-    --no-progress
+    --no-interaction
 
-# NOW copy the full source code (artisan is now present!)
+# 3. Now copy the entire project (artisan is here!)
 COPY . .
 
-# Run post-install scripts (package:discover, etc.)
-RUN composer dump-autoload --optimize
+# 4. Generate autoloader + run post-install scripts (now artisan exists)
+RUN composer dump-autoload --optimize \
+    && composer run-script post-autoload-dump \
+    && composer run-script post-root-package-install \
+    && composer run-script post-create-project-cmd
 
-# Build Vite assets
-RUN npm ci && npm run build && rm -rf node_modules
+# 5. Build frontend assets
+RUN npm ci --legacy-peer-deps && npm run build && rm -rf node_modules
 
-# ---------- Final Runtime Stage ----------
+# ================ FINAL IMAGE ================
 FROM php:8.3-apache
 
 # Runtime dependencies only
@@ -48,19 +49,19 @@ RUN apt-get update && apt-get install -y \
     libpng-dev libjpeg-dev libfreetype6-dev libzip-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install pdo_mysql zip bcmath gd \
-    && rm -rf /var/lib/apt/lists/*
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Apache config
+# Apache rewrite
 RUN a2enmod rewrite
 
-# Copy built app from builder
+# Copy built application
 COPY --from=builder /app /var/www/html
 
-# Permissions
+# Fix permissions
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Point Apache to public folder
+# Laravel public folder as document root
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' \
     /etc/apache2/sites-available/*.conf \
