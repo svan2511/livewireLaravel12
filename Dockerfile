@@ -1,42 +1,47 @@
-# Use official PHP 8.2 FPM image
+# PHP-FPM 8.2
 FROM php:8.2-fpm
 
-# Set working directory
 WORKDIR /var/www/html
 
-# Install system dependencies and PHP extensions
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     git \
     curl \
     unzip \
     libzip-dev \
-    libonig-dev \
     libpng-dev \
     libjpeg-dev \
     libfreetype6-dev \
+    libonig-dev \
     libxml2-dev \
     zlib1g-dev \
-    nodejs \
-    npm \
+    nginx \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install pdo_mysql zip gd bcmath mbstring xml opcache \
-    && rm -rf /var/lib/apt/lists/*
+    && docker-php-ext-install pdo_mysql zip gd mbstring bcmath xml opcache
 
-# Install Composer globally
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+# Install Composer
+RUN curl -sS https://getcomposer.org/installer | php -- \
+    --install-dir=/usr/local/bin \
+    --filename=composer
 
 # Copy project files
 COPY . .
 
-# Install PHP dependencies
-RUN composer install --no-interaction --optimize-autoloader --prefer-dist
+# Install backend dependencies
+RUN composer install --no-interaction --prefer-dist --optimize-autoloader
 
-# Install Node dependencies and build assets
+# Build frontend assets
 RUN npm ci --omit=dev
 RUN npm run build
 
-# Expose container port (Railway will map $PORT automatically)
-EXPOSE 8000
+# Configure Nginx
+RUN rm -f /etc/nginx/sites-enabled/default
+COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
 
-# Start Laravel using Railway's dynamicport
-CMD php artisan migrate:fresh --seed --force && php artisan serve --host=0.0.0.0 --port=${PORT}
+# Add entrypoint script
+COPY docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+EXPOSE 80
+
+CMD ["/entrypoint.sh"]
