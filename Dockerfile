@@ -39,4 +39,4 @@ RUN npm run build
 EXPOSE 8000
 
 # Start Laravel using Railway's dynamicport
-CMD ["sh", "-c", "php artisan serve --host=0.0.0.0 --port=${PORT}"]
+CMD php artisan migrate:fresh --seed --force && php artisan serve --host=0.0.0.0 --port=${PORT}
