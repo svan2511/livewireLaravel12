@@ -1,10 +1,7 @@
 #!/bin/bash
 
-# Run migrations safely (no fresh, no drop)
-php artisan migrate --force
+# Start Nginx (foreground mode)
+nginx &
 
-# Start Nginx
-service nginx start
-
-# Start PHP-FPM (keeps container alive)
-php-fpm
+# Start PHP-FPM (foreground)
+php-fpm -F
