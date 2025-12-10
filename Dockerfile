@@ -19,6 +19,10 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install pdo_mysql zip gd mbstring bcmath xml opcache
 
+# Install Node.js (v18)
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
+    && apt-get install -y nodejs
+
 # Install Composer
 RUN curl -sS https://getcomposer.org/installer | php -- \
     --install-dir=/usr/local/bin \
@@ -27,10 +31,10 @@ RUN curl -sS https://getcomposer.org/installer | php -- \
 # Copy project files
 COPY . .
 
-# Install backend dependencies
+# Install PHP dependencies
 RUN composer install --no-interaction --prefer-dist --optimize-autoloader
 
-# Build frontend assets
+# Install Node dependencies & build assets
 RUN npm ci --omit=dev
 RUN npm run build
 
