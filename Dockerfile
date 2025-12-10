@@ -1,77 +1,73 @@
 # ---------- Builder Stage ----------
-FROM php:8.3-cli as builder
+FROM php:8.3-cli AS builder
 
-# Install system dependencies + Node.js 20
+# Install dependencies
 RUN apt-get update && apt-get install -y \
-    git \
-    curl \
-    libpng-dev \
-    libonig-dev \
-    libxml2-dev \
-    libzip-dev \
-    libjpeg62-turbo-dev \
-    libfreetype6-dev \
-    zip \
-    unzip \
-    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
-    && apt-get install -y nodejs \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
+    git curl zip unzip \
+    libpng-dev libjpeg-dev libfreetype6-dev libzip-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install PHP extensions (including gd correctly)
+# Node.js 20 (Railway loves it)
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs
+
+# PHP Extensions (including gd for PhpSpreadsheet)
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j$(nproc) pdo_mysql mbstring zip exif pcntl bcmath gd opcache
+    && docker-php-ext-install -j$(nproc) pdo_mysql zip bcmath gd opcache
 
-# Install Composer
+# Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-WORKDIR /var/www/html
+WORKDIR /app
 
-# Copy only composer files first → better caching
+# Copy composer files
 COPY composer.json composer.lock ./
 
-# Install PHP dependencies (production only)
-RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+# Install dependencies (allow scripts because Laravel needs artisan)
+RUN composer install \
+    --no-dev \
+    --optimize-autoloader \
+    --no-interaction \
+    --prefer-dist \
+    --no-progress
 
-# Copy source code
+# NOW copy the full source code (artisan is now present!)
 COPY . .
 
-# Build assets with Vite (Laravel 12 uses Vite)
-RUN npm ci && npm run build && rm -rf node_modules
-
-# Generate optimized autoloader
+# Run post-install scripts (package:discover, etc.)
 RUN composer dump-autoload --optimize
 
-# ---------- Final Stage (Apache) ----------
+# Build Vite assets
+RUN npm ci && npm run build && rm -rf node_modules
+
+# ---------- Final Runtime Stage ----------
 FROM php:8.3-apache
 
-# Install only runtime dependencies
+# Runtime dependencies only
 RUN apt-get update && apt-get install -y \
-    libpng-dev \
-    libonig-dev \
-    libzip-dev \
-    libjpeg62-turbo-dev \
-    libfreetype6-dev \
+    libpng-dev libjpeg-dev libfreetype6-dev libzip-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install pdo_mysql mbstring zip exif pcntl bcmath gd \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
+    && docker-php-ext-install pdo_mysql zip bcmath gd \
+    && rm -rf /var/lib/apt/lists/*
 
-# Enable Apache mod_rewrite
+# Apache config
 RUN a2enmod rewrite
 
-# Copy built application from builder stage
-COPY --from=builder /var/www/html /var/www/html
+# Copy built app from builder
+COPY --from=builder /app /var/www/html
 
-# Set correct permissions
+# Permissions
 RUN chown -R www-data:www-data /var/www/html \
-    && chmod -R 755 /var/www/html/storage \
-    && chmod -R 755 /var/www/html/bootstrap/cache
+    && chmod -R 755 /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Change Apache document root to Laravel's public folder
+# Point Apache to public folder
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
-RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
-RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
+RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' \
+    /etc/apache2/sites-available/*.conf \
+    /etc/apache2/apache2.conf \
+    /etc/apache2/conf-available/*.conf
 
-# Use Railway's PORT (very important!)
+# Railway uses $PORT
 EXPOSE 8080
 ENV PORT=8080
 
