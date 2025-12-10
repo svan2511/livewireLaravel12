@@ -4,17 +4,17 @@ FROM php:8.3-apache
 RUN apt-get update && apt-get install -y \
     git \
     curl \
+    unzip \
+    libzip-dev \
     libpng-dev \
     libjpeg-dev \
     libfreetype6-dev \
-    libzip-dev \
     libonig-dev \
     libxml2-dev \
-    zip \
-    unzip \
-    nodejs \
-    npm \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
+    zlib1g-dev \
+    nginx \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install pdo_mysql zip gd mbstring bcmath xml opcache
 
 # Configure and install PHP extensions
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
