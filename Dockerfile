@@ -38,17 +38,20 @@ RUN composer install --no-interaction --prefer-dist --optimize-autoloader
 RUN npm ci --omit=dev
 RUN npm run build
 
-# Fix permissions (important)
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+# Permissions
+RUN chown -R www-data:www-data storage bootstrap/cache
 
-# Configure PHP-FPM to listen on socket instead of TCP
+# Configure PHP-FPM to use socket
 RUN sed -i 's|listen = 9000|listen = /run/php/php8.2-fpm.sock|' /usr/local/etc/php-fpm.d/zz-docker.conf
+
+# 🔥 FIX: create socket directory
+RUN mkdir -p /run/php && chown www-data:www-data /run/php
 
 # Configure Nginx
 RUN rm -f /etc/nginx/sites-enabled/default
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
 
-# Copy entrypoint
+# Entrypoint
 COPY docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
